@@ -176,6 +176,8 @@ public class FXMLController
 			this.txtResult.setText("Errore di formato: inserire un valore intero positivo di attori condivisi (c)");
 			return;
 		}
+		
+		this.model.computeBestDirectorsPathFrom(selectedDirector, numMaxActors);
     }
 
     @FXML
