@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -107,16 +108,19 @@ public class Model
 		this.totCommonActors = new HashMap<>();
 		
 		List<Director> partialSolution = new ArrayList<>();
+		Set<Director> partialSolutionSet = new HashSet<>();	//overhead to increase performance
 		partialSolution.add(startDirector);
+		partialSolutionSet.add(startDirector);
 		
 		int currentCommonActors = 0;
 		
-		this.recursiveBestPathComputation(partialSolution, currentCommonActors, numMaxActors);
+		this.recursiveBestPathComputation(partialSolution, partialSolutionSet, 
+				currentCommonActors, numMaxActors);
 	}
 
 
 	private void recursiveBestPathComputation(List<Director> partialSolution, 
-			int currentCommonActors, int numMaxActors)
+			Set<Director> partialSolutionSet, int currentCommonActors, int numMaxActors)
 	{
 		Director lastAdded = partialSolution.get(partialSolution.size() - 1);
 		boolean flag = false; //it indicates if this is(not) a terminal node in a path
@@ -126,16 +130,18 @@ public class Model
 			int commonActors = (int)this.graph.getEdgeWeight(nextEdge);
 			Director adjacentDirector = Graphs.getOppositeVertex(this.graph, nextEdge, lastAdded);
 						
-			if(partialSolution.contains(adjacentDirector) || 
+			if(partialSolutionSet.contains(adjacentDirector) || 
 					currentCommonActors + commonActors > numMaxActors)
 				continue;	//this node must not be explored
 			
 			flag = true;	//explore new nodes
 			partialSolution.add(adjacentDirector);
-			this.recursiveBestPathComputation(partialSolution, 
+			partialSolutionSet.add(adjacentDirector);
+			this.recursiveBestPathComputation(partialSolution, partialSolutionSet,
 										currentCommonActors + commonActors, numMaxActors);	//recursive call
 			
 			partialSolution.remove(partialSolution.size() - 1); //backtracking
+			partialSolutionSet.remove(adjacentDirector);
 		}
 		
 		if(!flag)
