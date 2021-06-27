@@ -4,6 +4,7 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,10 @@ public class Model
 	private final ImdbDAO dao;
 	private Graph<Director, DefaultWeightedEdge> graph;
 	private final Map<Integer, Director> directorsIdMap;
+	
+	private Collection<List<Director>> bestPaths;
+	private int maxNumDirectors;
+	private int totCommonActors;
 	
 	
 	public Model()
@@ -93,4 +98,72 @@ public class Model
 		return adjacentDirectors;
 	}
 
+
+	public void computeBestDirectorsPathFrom(Director startDirector, int numMaxActors)
+	{
+		//initialization
+		this.bestPaths = new HashSet<>();
+		this.maxNumDirectors = Integer.MIN_VALUE;
+		this.totCommonActors = 0;
+		
+		List<Director> partialSolution = new ArrayList<>();
+		partialSolution.add(startDirector);
+		
+		int currentCommonActors = 0;
+		
+		this.recursiveBestPathComputation(partialSolution, currentCommonActors, numMaxActors);
+	}
+
+
+	private void recursiveBestPathComputation(List<Director> partialSolution, 
+			int currentCommonActors, int numMaxActors)
+	{
+		Director lastAdded = partialSolution.get(partialSolution.size() - 1);
+		boolean flag = false; //it indicates if this is(not) a terminal node in a path
+		
+		for(var nextEdge : this.graph.edgesOf(lastAdded))
+		{
+			int commonActors = (int)this.graph.getEdgeWeight(nextEdge);
+			Director adjacentDirector = Graphs.getOppositeVertex(this.graph, nextEdge, lastAdded);
+						
+			if(partialSolution.contains(adjacentDirector) || 
+					currentCommonActors + commonActors > numMaxActors)
+				continue;	//this node must not be explored
+			
+			flag = true;	//explore new nodes
+			partialSolution.add(adjacentDirector);
+			this.recursiveBestPathComputation(partialSolution, 
+										currentCommonActors + commonActors, numMaxActors);	//recursive call
+			
+			partialSolution.remove(partialSolution.size() - 1); //backtracking
+		}
+		
+		if(!flag)
+		{
+			//lastAdded is a terminal node in a path
+			int numDirectors = partialSolution.size();
+			
+			if(numDirectors >= this.maxNumDirectors)
+			{
+				if(numDirectors > this.maxNumDirectors)
+				{
+					this.bestPaths = new HashSet<>();
+					this.maxNumDirectors = numDirectors;
+				}
+				
+				this.bestPaths.add(new ArrayList<>(partialSolution));	//adding new best solution
+				this.totCommonActors = currentCommonActors;
+			}
+		}
+	}
+	
+	public int getTotCommonActors()
+	{
+		return this.totCommonActors;
+	}
+	
+	public Collection<List<Director>> getBestPaths()
+	{
+		return this.bestPaths;
+	}
 }

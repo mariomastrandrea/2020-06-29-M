@@ -136,7 +136,46 @@ public class FXMLController
 	@FXML
     void doRicorsione(ActionEvent event) 
     {
-
+		if(!this.model.isGraphCreated())
+		{
+			this.txtResult.setText("Errore: creare prima il grafo");
+			return;
+		}
+		
+		Director selectedDirector = this.boxRegista.getValue();
+		
+		if(selectedDirector == null)
+		{
+			this.txtResult.setText("Errore: selezionare un regista dal menù a tendina");
+			return;
+		}
+		
+		String inputActors = this.txtAttoriCondivisi.getText();
+		
+		if(inputActors == null || inputActors.isBlank())
+		{
+			this.txtResult.setText("Errore: inserire un valore di attori condivisi (c)");
+			return;
+		}
+		
+		inputActors = inputActors.trim();
+		
+		int numMaxActors;
+		try
+		{
+			numMaxActors = Integer.parseInt(inputActors);
+		}
+		catch(NumberFormatException nfe)
+		{
+			this.txtResult.setText("Errore di formato: inserire un valore intero valido di attori condivisi (c)");
+			return;
+		}
+		
+		if(numMaxActors < 0)
+		{
+			this.txtResult.setText("Errore di formato: inserire un valore intero positivo di attori condivisi (c)");
+			return;
+		}
     }
 
     @FXML
