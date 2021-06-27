@@ -3,6 +3,7 @@ package it.polito.tdp.imdb;
 import java.net.URL;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -178,9 +179,46 @@ public class FXMLController
 		}
 		
 		this.model.computeBestDirectorsPathFrom(selectedDirector, numMaxActors);
+		
+		Collection<List<Director>> bestPaths = this.model.getBestPaths();
+		Map<List<Director>, Integer> totCommonActors = this.model.getTotCommonActors();
+		
+		String output = this.printBestPaths(selectedDirector, bestPaths, totCommonActors);
+		this.txtResult.setText(output);
     }
 
-    @FXML
+    private String printBestPaths(Director selectedDirector, 
+    		Collection<List<Director>> bestPaths, Map<List<Director>, Integer> totCommonActors)
+	{
+		if(bestPaths.isEmpty() || totCommonActors.isEmpty())
+			return "Non esistono cammini migliori per i dati selezionati";
+		
+		StringBuilder sb = new StringBuilder();
+		
+		int count = 0;
+		for(List<Director> bestPath : bestPaths)
+		{
+			count++;
+			
+			if(bestPath.size() > 1)
+				sb.append("\n").append("-".repeat(7)).append(" ").append(count).append(" ").append("-".repeat(7));
+			
+			int d = 0;
+			for(Director director : bestPath)
+			{
+				sb.append("\n").append(++d).append(") ").append(director);
+			}
+			
+			sb.append("\nTotale attori condivisi: ").append(totCommonActors.get(bestPath));
+			sb.append("\n");
+		}
+		
+		sb.insert(0, "Cammini migliori a partire dal regista "+ selectedDirector + ":\n");
+    	
+		return sb.toString();
+	}
+
+	@FXML
     void initialize() 
     {
         assert btnCreaGrafo != null : "fx:id=\"btnCreaGrafo\" was not injected: check your FXML file 'Scene.fxml'.";

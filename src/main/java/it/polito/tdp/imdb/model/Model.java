@@ -23,7 +23,7 @@ public class Model
 	
 	private Collection<List<Director>> bestPaths;
 	private int maxNumDirectors;
-	private int totCommonActors;
+	private Map<List<Director>, Integer> totCommonActors;
 	
 	
 	public Model()
@@ -104,7 +104,7 @@ public class Model
 		//initialization
 		this.bestPaths = new HashSet<>();
 		this.maxNumDirectors = Integer.MIN_VALUE;
-		this.totCommonActors = 0;
+		this.totCommonActors = new HashMap<>();
 		
 		List<Director> partialSolution = new ArrayList<>();
 		partialSolution.add(startDirector);
@@ -149,15 +149,17 @@ public class Model
 				{
 					this.bestPaths = new HashSet<>();
 					this.maxNumDirectors = numDirectors;
+					this.totCommonActors = new HashMap<>();
 				}
 				
-				this.bestPaths.add(new ArrayList<>(partialSolution));	//adding new best solution
-				this.totCommonActors = currentCommonActors;
+				List<Director> bestPath = new ArrayList<>(partialSolution);
+				this.bestPaths.add(bestPath);	//adding new best solution
+				this.totCommonActors.put(bestPath, currentCommonActors);
 			}
 		}
 	}
 	
-	public int getTotCommonActors()
+	public Map<List<Director>, Integer> getTotCommonActors()
 	{
 		return this.totCommonActors;
 	}
