@@ -1,12 +1,13 @@
-/**
- * Sample Skeleton for 'Scene.fxml' Controller Class
- */
-
 package it.polito.tdp.imdb;
 
 import java.net.URL;
+import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.imdb.model.Director;
 import it.polito.tdp.imdb.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,54 +16,132 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
-public class FXMLController {
-	
-	private Model model;
-
-    @FXML // ResourceBundle that was given to the FXMLLoader
+public class FXMLController 
+{
+    @FXML
     private ResourceBundle resources;
 
-    @FXML // URL location of the FXML file that was given to the FXMLLoader
+    @FXML
     private URL location;
 
-    @FXML // fx:id="btnCreaGrafo"
-    private Button btnCreaGrafo; // Value injected by FXMLLoader
-
-    @FXML // fx:id="btnAdiacenti"
-    private Button btnAdiacenti; // Value injected by FXMLLoader
-
-    @FXML // fx:id="btnCercaAffini"
-    private Button btnCercaAffini; // Value injected by FXMLLoader
-
-    @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
-
-    @FXML // fx:id="boxRegista"
-    private ComboBox<?> boxRegista; // Value injected by FXMLLoader
-
-    @FXML // fx:id="txtAttoriCondivisi"
-    private TextField txtAttoriCondivisi; // Value injected by FXMLLoader
-
-    @FXML // fx:id="txtResult"
-    private TextArea txtResult; // Value injected by FXMLLoader
+    @FXML
+    private Button btnCreaGrafo;
 
     @FXML
-    void doCreaGrafo(ActionEvent event) {
+    private Button btnAdiacenti;
+
+    @FXML
+    private Button btnCercaAffini;
+
+    @FXML
+    private ComboBox<Year> boxAnno;
+
+    @FXML
+    private ComboBox<Director> boxRegista;
+
+    @FXML
+    private TextField txtAttoriCondivisi;
+
+    @FXML
+    private TextArea txtResult;
+    
+    private Model model;
+    
+
+    @FXML
+    void doCreaGrafo(ActionEvent event) 
+    {
+    	Year selectedYear = this.boxAnno.getValue();
+    	
+    	if(selectedYear == null)
+    	{
+    		this.txtResult.setText("Errore: selezionare un anno dal menù a tendina");
+    		return;
+    	}
+    	
+    	this.model.createGraph(selectedYear);
+    	
+    	//print
+    	int numVertices = this.model.getNumVertices();
+    	int numEdges = this.model.getNumEdges();
+    	
+    	String output = this.printGraphInfo(numVertices, numEdges);
+    	this.txtResult.setText(output);
+    	
+    	//update UI
+    	List<Director> directors = this.model.getOrderedDirectors();
+    	this.boxRegista.getItems().clear();
+    	this.boxRegista.getItems().addAll(directors);
+    }
+
+    private String printGraphInfo(int numVertices, int numEdges)
+	{
+		return String.format("Grafo creato\n#Vertici: %d\n#Archi: %d", numVertices, numEdges);
+	}
+
+	@FXML
+    void doRegistiAdiacenti(ActionEvent event) 
+    {
+		if(!this.model.isGraphCreated())
+		{
+			this.txtResult.setText("Errore: creare prima il grafo");
+			return;
+		}
+		
+		Director selectedDirector = this.boxRegista.getValue();
+		
+		if(selectedDirector == null)
+		{
+			this.txtResult.setText("Errore: selezionare un regista dal menù a tendina");
+			return;
+		}
+		
+		Map<Director, Integer> adjacentDirectors = 
+				this.model.getAdjacentDirectorsTo(selectedDirector);
+		
+		List<Director> orderedDirectors = new ArrayList<>(adjacentDirectors.keySet());
+		orderedDirectors.sort((d1, d2) -> 
+		{
+			int commonActors1 = adjacentDirectors.get(d1);
+			int commonActors2 = adjacentDirectors.get(d2);
+			
+			return Integer.compare(commonActors2, commonActors1);
+		});
+		
+		String output = this.printDirectorsActors(selectedDirector, orderedDirectors, adjacentDirectors, 5);
+		this.txtResult.setText(output);
+    }
+
+    private String printDirectorsActors(Director selectedDirector, List<Director> orderedDirectors, 
+    		Map<Director, Integer> adjacentDirectors, int max)
+	{
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("Registi adiacenti a ").append(selectedDirector).append(":");
+    	int count = 0;
+    	
+		for(Director director : orderedDirectors)
+		{
+			count++;
+			int numActors = adjacentDirectors.get(director);
+			
+			sb.append("\n • ").append(director.toString())
+				.append("  -  # attori condivisi: ").append(numActors);
+			
+			if(count >= max) break;
+		}
+		
+		return sb.toString();
+	}
+
+	@FXML
+    void doRicorsione(ActionEvent event) 
+    {
 
     }
 
     @FXML
-    void doRegistiAdiacenti(ActionEvent event) {
-
-    }
-
-    @FXML
-    void doRicorsione(ActionEvent event) {
-
-    }
-
-    @FXML // This method is called by the FXMLLoader when initialization is complete
-    void initialize() {
+    void initialize() 
+    {
         assert btnCreaGrafo != null : "fx:id=\"btnCreaGrafo\" was not injected: check your FXML file 'Scene.fxml'.";
         assert btnAdiacenti != null : "fx:id=\"btnAdiacenti\" was not injected: check your FXML file 'Scene.fxml'.";
         assert btnCercaAffini != null : "fx:id=\"btnCercaAffini\" was not injected: check your FXML file 'Scene.fxml'.";
@@ -70,13 +149,12 @@ public class FXMLController {
         assert boxRegista != null : "fx:id=\"boxRegista\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtAttoriCondivisi != null : "fx:id=\"txtAttoriCondivisi\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
-
     }
     
-   public void setModel(Model model) {
-    	
+    public void setModel(Model model)
+    {
     	this.model = model;
-    	
+    	this.boxAnno.getItems().addAll(Year.of(2004), Year.of(2005), Year.of(2006));
     }
-    
 }
+
